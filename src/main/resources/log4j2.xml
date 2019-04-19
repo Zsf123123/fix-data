@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <properties>
+        <property name="MINUTE_HOME">D:/logs</property>
+        <property name="FILE_NAME">mylog</property>
+    </properties>
+
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </Console>
+
+       <!-- <RollingRandomAccessFile name="RollingRandomAccessFile" fileName="${LOG_HOME}/${FILE_NAME}.log" filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME}-%d{yyyy-MM-dd HH-mm}-%i.log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="20"/>
+        </RollingRandomAccessFile>-->
+
+
+    <RollingRandomAccessFile name="_1min_appender" fileName="${MINUTE_HOME}/${FILE_NAME}.log" filePattern="${MINUTE_HOME}/${FILE_NAME}-%d{yyyy-MM-dd-HH-mm}.log">
+        <PatternLayout pattern="%m%n"/>
+        <Policies>
+            <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+        </Policies>
+    </RollingRandomAccessFile>
+
+
+        <Async name="AsyncAppender">
+            <AppenderRef ref="_1min_appender"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="RollingRandomAccessFileLogger" level="info" additivity="true">
+            <AppenderRef ref="AsyncAppender" />
+            <!--<AppenderRef ref="Console" />-->
+        </Logger>
+
+
+
+    </Loggers>
+</Configuration>
