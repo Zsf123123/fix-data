@@ -32,7 +32,7 @@ public class DataPreDealWith {
     private  static  String  longitude = ReadProperty.getConfigData("hbase.basicData.rowkey.longitude");
     private  static  String  latitude = ReadProperty.getConfigData("hbase.basicData.rowkey.latitude");
     private  static  String  time = ReadProperty.getConfigData("hbase.basicData.time");
-    private  static  String  deviceId = ReadProperty.getConfigData()
+//    private  static  String  deviceId = ReadProperty.getConfigData();
 
 
     /**
