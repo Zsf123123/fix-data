@@ -457,13 +457,14 @@ public class HbaseDao {
 
 
         Scan scan = new Scan();
-//        scan.addFamily(family.getBytes());
+        scan.addFamily(family.getBytes());
         scan.setStartRow(startrow.getBytes());
         scan.setStopRow( (endrow + "z") .getBytes());
 
         ResultScanner rs = null;
+
         try {
-            rs = table.getScanner(scan);
+            rs = basicDataTable.getScanner(scan);
         } catch (IOException e) {
             logger.error("获取" + tableName + "数据失败 !!");
             e.printStackTrace();

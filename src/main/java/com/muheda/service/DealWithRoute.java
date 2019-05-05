@@ -132,7 +132,7 @@ public class DealWithRoute {
     public static List<Road> findRoutesByMinRectangle(LngAndLat min, LngAndLat max) throws SQLException {
 
 
-        String sql = "select * from roads_v4 where " + min.getLng() + "> min_x and " + min.getLat() + "> min_y and " + max.getLng() + "< max_x and " + max.getLat() + "< max_y;";
+        String sql = "select * from roads_v6 where " + min.getLng() + "> min_x and " + min.getLat() + "> min_y and " + max.getLng() + "< max_x and " + max.getLat() + "< max_y;";
         return DbPoolConnection.findRoutesByRectangle(sql);
 
     }

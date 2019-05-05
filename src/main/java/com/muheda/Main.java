@@ -45,13 +45,17 @@ public class Main {
             for (String deviceId : allDeviceId) {
 
                 //获取当前正在修复的时间，拼接成rowKey，进行数据的查询
-                String startRow = "gt" + "_" + deviceId + "_" + tempDay + "_";
-                String endRow   = "gt" + "_" + deviceId + "_" + tempDay + "_z";
+                String startRow = "gt" + "_" + deviceId + "_" + tempDay;
+                String endRow   = "gt" + "_" + deviceId + "_" + tempDay + "z";
 
                 List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromHbase(startRow, endRow);
 
 
-                startFixRoad(lngAndLats,deviceId);
+                if(  lngAndLats != null && lngAndLats.size() > 0){
+
+                    startFixRoad(lngAndLats,deviceId);
+
+                }
 
 
             }
@@ -78,14 +82,13 @@ public class Main {
     public  static  void startFixRoad(List<LngAndLat> route, String deviceId) {
 
 
-
         //数据预处理阶段，获取数据源
-        List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromConfigureFile();
+//        List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromConfigureFile();
 
         /**
          * @desc 按照时间先将路按照时间进行分段处理。再按照路径的距离进行划分
          */
-        List<List<LngAndLat>> routeByroads = DealWithRoute.splitRoadByTime(lngAndLats);
+        List<List<LngAndLat>> routeByroads = DealWithRoute.splitRoadByTime(route);
 
 
         //在这些按照路段分割的行程之内。再次按照距离进行分割。以免出现一些关于设备出现的其他的问题。比如有的设备会经常发送一些经纬度为0的数据
