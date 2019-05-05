@@ -1,5 +1,6 @@
 package com.muheda.utils;
 
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,8 @@ public class DateUtils {
 
 
     public static final String DATETIME_FORMAT = "yyyyMMddHHmmss";
+
+    public static final String DATETIME_DAY = "yyyyMMdd";
 
     private  static Logger logger = LoggerFactory.getLogger(DateUtils.class);
 
@@ -86,6 +89,45 @@ public class DateUtils {
         String dateString = formatter.format(dateDate);
 
         return dateString;
+    }
+
+
+    /**
+     * @desc 获取当前时间
+     */
+    public static String getTodayTime(){
+
+        Date date = new Date();
+        SimpleDateFormat dateFormat= new SimpleDateFormat(DATETIME_DAY);
+        return dateFormat.format(date);
+
+    }
+
+
+    /**
+     * @desc 获取传入时间之前一天的时间
+     * @param specifiedDay
+     * @return
+     */
+    public  String getTheDayBeforeYesterday(String specifiedDay){
+
+        //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar c = Calendar.getInstance();
+        Date date=null;
+        try {
+            date = new SimpleDateFormat(DATETIME_DAY).parse(specifiedDay);
+        } catch (ParseException e) {
+            logger.error("时间转换异常");
+            e.printStackTrace();
+        }
+        c.setTime(date);
+        int day=c.get(Calendar.DATE);
+        c.set(Calendar.DATE,day-1);
+
+        String dayBefore=new SimpleDateFormat(DATETIME_DAY).format(c.getTime());
+
+        return dayBefore;
+
     }
 
 

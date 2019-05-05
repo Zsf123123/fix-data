@@ -8,6 +8,7 @@ import com.muheda.dataSourece.DataPreDealWith;
 import com.muheda.domain.LngAndLat;
 import com.muheda.domain.Road;
 import com.muheda.service.DealWithRoute;
+import com.muheda.utils.DateUtils;
 import com.muheda.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,36 +19,46 @@ import java.util.*;
 
 public class Main {
 
-
     private static Logger logger = LoggerFactory.getLogger(Main.class);
 
-    private  static  int roadNum = 0;
+    private  static  CacheQueueHandle cacheQueueHandle = new CacheQueueHandle();
 
+    private  static  List<String>  allDeviceId;
 
-    private  static   CacheQueueHandle cacheQueueHandle = new CacheQueueHandle();
-
+    //用于缓存当前修复到哪一天了
+    private static String  tempDay;
 
 
     public static void main(String[] args) {
 
-
+        //开启一个消费数据标签队列的线程
         new ConsumeCacheGenerateRouteLabel().startThreadConsume();
 
-        //数据预处理阶段，获取数据源
-        List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromConfigureFile();
+        //获取该设备的目前的所有的设备号
+        allDeviceId = HbaseDao.getAllDeviceId("device_register_info", "getuyunjing", "deviceId", "gt");
 
-        String deviceId = "010001";
-        //传入设备， 因为在存储行程数据的时候需要
-        startFixRoad(lngAndLats, deviceId);
+        DateUtils.getTodayTime();
+
+        //从现在开始，往回进行查询每一天的数据进行修复
+        while (true){
+
+            for (String deviceId : allDeviceId) {
+
+                //获取当前正在修复的时间，拼接成rowKey，进行数据的查询
+                String startRow = "gt" + "_" + deviceId + "_" + tempDay + "_";
+                String endRow   = "gt" + "_" + deviceId + "_" + tempDay + "_z";
+
+                List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromHbase(startRow, endRow);
 
 
-        //扫描一个设备的数据从当天开始往之前开始遍历
-
-        //从hbase中获取
+                startFixRoad(lngAndLats,deviceId);
 
 
-//        DataPreDealWith.datareProcessingFromHbase("")
+            }
 
+
+
+        }
 
 
 
@@ -85,9 +96,6 @@ public class Main {
 
 
         for (List<LngAndLat> list : routesOneWay) {
-
-            //遍历list
-            System.out.println("路径编号:" + roadNum++ );
 
             System.out.println("原始路径数据 ");
             for (LngAndLat lngAndLat : list) {

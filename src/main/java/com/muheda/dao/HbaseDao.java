@@ -4,16 +4,17 @@ package com.muheda.dao;
 import com.alibaba.fastjson.JSON;
 import com.muheda.domain.LngAndLat;
 import com.muheda.utils.ReadProperty;
+import com.muheda.utils.StringUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.tools.jconsole.Tab;
+
 
 import java.io.IOException;
-import java.io.LineNumberReader;
+
 import java.util.*;
 
 
@@ -531,8 +532,71 @@ public class HbaseDao {
         }
 
 
+    }
+
+
+    /**
+     * @desc 查询该设备的所有的设备号，查询的是该设备的注册表
+     * @param tableName   表明
+     * @param family      列簇名
+     * @param column      列明
+     * @param  pre        查询列簇的前缀
+     */
+    public static List<String> getAllDeviceId(String tableName,String family,String column,String pre){
+
+        if(StringUtil.isEmpty(tableName)){
+            logger.error("tableName  is null");
+        }
+
+        LinkedList<String> resultList = new LinkedList<>();
+
+        Table table = null;
+
+        try {
+            table = connection.getTable(TableName.valueOf(tableName));
+        } catch (IOException e) {
+            logger.error("表连接获取异常");
+            e.printStackTrace();
+        }
+
+        Scan scan = new Scan();
+        scan.setStartRow((pre + "_" ).getBytes());
+        scan.setStopRow((pre + "_" + "z").getBytes());
+        scan.addColumn(family.getBytes(),column.getBytes());
+
+        ResultScanner scanner = null;
+        try {
+            scanner = table.getScanner(scan);
+        } catch (IOException e) {
+            logger.error("模糊查询Sann时返回数据异常");
+            e.printStackTrace();
+        }
+
+
+        for (Result result : scanner) {
+
+             if(result.isEmpty()){
+                 continue;
+             }
+
+            List<Cell> cells = result.listCells();
+
+            for(Cell  cell : cells) {
+               String col = new String(CellUtil.cloneQualifier(cell));
+               if(col.equals(column)){
+                   resultList.add(new String(CellUtil.cloneValue(cell)));
+               }
+            }
+
+        }
+
+
+      return  resultList;
 
     }
+
+
+
 
 
 }
