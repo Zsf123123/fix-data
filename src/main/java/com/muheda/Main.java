@@ -243,11 +243,7 @@ public class Main {
 
 
             //将此时的三急数据对应的路段发送到一个异步处理的程序中，这边只是做一个发送的作用,发送到一个异步的队列中
-
             cacheQueueHandle.appendToQueue(repairedList);
-
-
-            //
 
 
         }
