@@ -37,7 +37,7 @@ public class Main {
         //获取该设备的目前的所有的设备号
         allDeviceId = HbaseDao.getAllDeviceId("device_register_info", "getuyunjing", "deviceId", "gt");
 
-        DateUtils.getTodayTime();
+        tempDay = DateUtils.getTodayTime();
 
         //从现在开始，往回进行查询每一天的数据进行修复
         while (true){
@@ -57,6 +57,7 @@ public class Main {
             }
 
 
+            tempDay = DateUtils.getTheDayBeforeYesterday(tempDay);
 
         }
 
