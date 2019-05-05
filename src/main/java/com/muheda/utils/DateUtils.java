@@ -10,6 +10,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 
+
 public class DateUtils {
 
 
@@ -109,7 +110,7 @@ public class DateUtils {
      * @param specifiedDay
      * @return
      */
-    public  String getTheDayBeforeYesterday(String specifiedDay){
+    public static   String getTheDayBeforeYesterday(String specifiedDay){
 
         //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Calendar c = Calendar.getInstance();
