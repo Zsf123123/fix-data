@@ -125,6 +125,9 @@ public class DateUtils {
         int day=c.get(Calendar.DATE);
         c.set(Calendar.DATE,day-1);
 
+
+
+
         String dayBefore=new SimpleDateFormat(DATETIME_DAY).format(c.getTime());
 
         return dayBefore;
