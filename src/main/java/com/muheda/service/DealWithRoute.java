@@ -387,11 +387,26 @@ public class DealWithRoute {
         if (roads.size() == 1) {
 
             minAverageDistance = findMinDistanceByPointToRoad(list, roads.get(0));
+
+            if(minAverageDistance == null){
+                return  -1;
+            }
+
         }
 
         if (roads.size() >= 2) {
 
-            double distance0 = findMinDistanceByPointToRoad(list, roads.get(0));
+            double distance0 = 0.0;
+
+            try{
+                 distance0 = findMinDistanceByPointToRoad(list,
+                         roads.get(0));
+            }catch (Exception e ){
+
+                e.printStackTrace();
+            }
+
+
 
             double distance1 = findMinDistanceByPointToRoad(list, roads.get(1));
 
@@ -412,6 +427,7 @@ public class DealWithRoute {
                 secondLastIndex = 1;
 
             }
+
 
 
             for (int i = 2; i < roads.size(); i++) {
@@ -463,13 +479,16 @@ public class DealWithRoute {
 
         }
 
+        try {
+            //过滤数据，如果平均距离是大于100米的，则进行过滤操作
+            if (minAverageDistance > 100) {
 
-        //过滤数据，如果平均距离是大于100米的，则进行过滤操作
-        if (minAverageDistance > 100) {
+                return -1;
+            }
 
-            return -1;
+        }catch (Exception e){
+            e.printStackTrace();
         }
-
 
         if (roads.size() == 1) {
 
