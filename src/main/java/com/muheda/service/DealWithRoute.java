@@ -1,6 +1,6 @@
 package com.muheda.service;
 
-import clojure.lang.Obj;
+
 import com.muheda.dao.DbPoolConnection;
 import com.muheda.dao.HbaseDao;
 import com.muheda.domain.LngAndLat;
@@ -129,13 +129,49 @@ public class DealWithRoute {
     /**
      * @desc 通过最小矩形去数据库匹配出相应的路出来
      */
-    public static List<Road> findRoutesByMinRectangle(LngAndLat min, LngAndLat max) throws SQLException {
+    public static List<Road> findRoutesByMinRectangle(LngAndLat min, LngAndLat max, String routeAdcode) throws SQLException {
+
+        String sql = null;
 
 
-        String sql = "select * from roads_v6 where " + min.getLng() + "> min_x and " + min.getLat() + "> min_y and " + max.getLng() + "< max_x and " + max.getLat() + "< max_y;";
+        if(null != routeAdcode){
+
+            sql = "select * from roads_v6 where " + min.getLng() + "> min_x and " + min.getLat() + "> min_y and " + max.getLng() + "< max_x and " + max.getLat() + "< max_y where adcode =" + routeAdcode;
+
+        }else {
+
+            sql = "select * from roads_v6 where " + min.getLng() + "> min_x and " + min.getLat() + "> min_y and " + max.getLng() + "< max_x and " + max.getLat() + "< max_y;";
+
+        }
+
+
+
         return DbPoolConnection.findRoutesByRectangle(sql);
 
     }
+
+
+    /**
+     * @desc  寻找该路径所对应的区域ID
+     * @param min
+     * @param max
+     * @return
+     */
+    public static  String findRouteAdcode(LngAndLat min, LngAndLat max){
+
+        Double minLng  = min.getLng();
+        Double minLat = min.getLat();
+
+        Double maxLng = max.getLng();
+        Double maxLat = max.getLat();
+
+        String sql = "select adcode from  city_shape where" + minLng+ " > min_x and " + minLat  + "> min_y and "+ maxLng + "< max_x and " + maxLat + "< max_y";
+
+        logger.error(sql);
+
+        return  DbPoolConnection.findRouteAdcode(sql);
+    }
+
 
 
     /**
@@ -154,7 +190,7 @@ public class DealWithRoute {
                 "where distance1 > 0 AND distance1 < 0.05 AND distance2 > 0 ANd distance2 < 0.05 ";
 
 
-        System.out.println(sql);
+        logger.error(sql);
 
         return DbPoolConnection.findRoutesByRectangle(sql);
 
@@ -387,26 +423,11 @@ public class DealWithRoute {
         if (roads.size() == 1) {
 
             minAverageDistance = findMinDistanceByPointToRoad(list, roads.get(0));
-
-            if(minAverageDistance == null){
-                return  -1;
-            }
-
         }
 
         if (roads.size() >= 2) {
 
-            double distance0 = 0.0;
-
-            try{
-                 distance0 = findMinDistanceByPointToRoad(list,
-                         roads.get(0));
-            }catch (Exception e ){
-
-                e.printStackTrace();
-            }
-
-
+            double distance0 = findMinDistanceByPointToRoad(list, roads.get(0));
 
             double distance1 = findMinDistanceByPointToRoad(list, roads.get(1));
 
@@ -427,7 +448,6 @@ public class DealWithRoute {
                 secondLastIndex = 1;
 
             }
-
 
 
             for (int i = 2; i < roads.size(); i++) {
@@ -479,16 +499,13 @@ public class DealWithRoute {
 
         }
 
-        try {
-            //过滤数据，如果平均距离是大于100米的，则进行过滤操作
-            if (minAverageDistance > 100) {
 
-                return -1;
-            }
+        //过滤数据，如果平均距离是大于100米的，则进行过滤操作
+        if (minAverageDistance > 100) {
 
-        }catch (Exception e){
-            e.printStackTrace();
+            return -1;
         }
+
 
         if (roads.size() == 1) {
 
@@ -730,42 +747,42 @@ public class DealWithRoute {
 
         try {
 
-          Double sum = 0.0;
+            Double sum = 0.0;
 
-          String[] split = road.getShape().split(";");
+            String[] split = road.getShape().split(";");
 
-          // 如果该条路的点数小于等于1，那么这种情况没有必要进行计算了。
-          if (split.length <= 2) {
+            // 如果该条路的点数小于等于1，那么这种情况没有必要进行计算了。
+            if (split.length <= 2) {
 
-              return null;
-          }
+                return null;
+            }
 
-          //通过行程的每个点去计算
-          for (LngAndLat lngAndLat : list) {
+            //通过行程的每个点去计算
+            for (LngAndLat lngAndLat : list) {
 
-              //该点到这条路的最短距离
-              double minDistancestor;
+                //该点到这条路的最短距离
+                double minDistancestor;
 
-              minDistancestor = MapUtils.pointToLineVerticalDistance(arrayToPointObject(split[0]), arrayToPointObject(split[1]), lngAndLat);
+                minDistancestor = MapUtils.pointToLineVerticalDistance(arrayToPointObject(split[0]), arrayToPointObject(split[1]), lngAndLat);
 
-              //从第二段行程开始，到最后一个行程
-              for (int i = 1; i < split.length - 1; i++) {
+                //从第二段行程开始，到最后一个行程
+                for (int i = 1; i < split.length - 1; i++) {
 
-                  double distance = MapUtils.pointToLineVerticalDistance(arrayToPointObject(split[i]), arrayToPointObject(split[i + 1]), lngAndLat);
+                    double distance = MapUtils.pointToLineVerticalDistance(arrayToPointObject(split[i]), arrayToPointObject(split[i + 1]), lngAndLat);
 
-                  if (distance < minDistancestor) {
-                      minDistancestor = distance;
-                  }
-              }
-              sum += minDistancestor;
+                    if (distance < minDistancestor) {
+                        minDistancestor = distance;
+                    }
+                }
+                sum += minDistancestor;
 
-          }
+            }
 
-          average = sum / list.size();
-      }catch (Exception e){
+            average = sum / list.size();
+        }catch (Exception e){
 
-          e.printStackTrace();
-      }
+            e.printStackTrace();
+        }
 
         return  average;
     }

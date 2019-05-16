@@ -457,14 +457,13 @@ public class HbaseDao {
 
 
         Scan scan = new Scan();
-        scan.addFamily(family.getBytes());
+//        scan.addFamily(family.getBytes());
         scan.setStartRow(startrow.getBytes());
         scan.setStopRow( (endrow + "z") .getBytes());
 
         ResultScanner rs = null;
-
         try {
-            rs = basicDataTable.getScanner(scan);
+            rs = table.getScanner(scan);
         } catch (IOException e) {
             logger.error("获取" + tableName + "数据失败 !!");
             e.printStackTrace();
@@ -576,23 +575,23 @@ public class HbaseDao {
 
         for (Result result : scanner) {
 
-             if(result.isEmpty()){
-                 continue;
-             }
+            if(result.isEmpty()){
+                continue;
+            }
 
             List<Cell> cells = result.listCells();
 
             for(Cell  cell : cells) {
-               String col = new String(CellUtil.cloneQualifier(cell));
-               if(col.equals(column)){
-                   resultList.add(new String(CellUtil.cloneValue(cell)));
-               }
+                String col = new String(CellUtil.cloneQualifier(cell));
+                if(col.equals(column)){
+                    resultList.add(new String(CellUtil.cloneValue(cell)));
+                }
             }
 
         }
 
 
-      return  resultList;
+        return  resultList;
 
     }
 

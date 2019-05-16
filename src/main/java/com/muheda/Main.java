@@ -45,17 +45,13 @@ public class Main {
             for (String deviceId : allDeviceId) {
 
                 //获取当前正在修复的时间，拼接成rowKey，进行数据的查询
-                String startRow = "gt" + "_" + deviceId + "_" + tempDay;
-                String endRow   = "gt" + "_" + deviceId + "_" + tempDay + "z";
+                String startRow = "gt" + "_" + deviceId + "_" + tempDay + "_";
+                String endRow   = "gt" + "_" + deviceId + "_" + tempDay + "_z";
 
                 List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromHbase(startRow, endRow);
 
 
-                if(  lngAndLats != null && lngAndLats.size() > 0){
-
-                    startFixRoad(lngAndLats,deviceId);
-
-                }
+                startFixRoad(lngAndLats,deviceId);
 
 
             }
@@ -82,13 +78,14 @@ public class Main {
     public  static  void startFixRoad(List<LngAndLat> route, String deviceId) {
 
 
+
         //数据预处理阶段，获取数据源
-//        List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromConfigureFile();
+        List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromConfigureFile();
 
         /**
          * @desc 按照时间先将路按照时间进行分段处理。再按照路径的距离进行划分
          */
-        List<List<LngAndLat>> routeByroads = DealWithRoute.splitRoadByTime(route);
+        List<List<LngAndLat>> routeByroads = DealWithRoute.splitRoadByTime(lngAndLats);
 
 
         //在这些按照路段分割的行程之内。再次按照距离进行分割。以免出现一些关于设备出现的其他的问题。比如有的设备会经常发送一些经纬度为0的数据
@@ -116,10 +113,14 @@ public class Main {
 
             List<Road> matchRoads = null;
 
+            // 确定出该路段的一个区域
+
+            String routeAdcode = DealWithRoute.findRouteAdcode(min.get(0), min.get(1));
+
 
             try {
                 //拿到的匹配的路
-                matchRoads = DealWithRoute.findRoutesByMinRectangle(min.get(0), min.get(1));
+                matchRoads = DealWithRoute.findRoutesByMinRectangle(min.get(0), min.get(1),routeAdcode);
 
             } catch (SQLException e) {
                 logger.error("查询匹配路段异常");
@@ -128,24 +129,6 @@ public class Main {
 
 
             int index = DealWithRoute.averageDistanceTop2(list, matchRoads);
-
-            // 表示的是再已有的路段中没有找到符合的路段
-           /* if (index == -1) {
-
-                //使用最下矩形的的距离的判断方法进行寻找可以匹配的路段
-                List<Road> roads = DealWithRoute.finRouteByDistance(min.get(0), min.get(1));
-
-                 int index2 = DealWithRoute.averageDistanceTop2(list, matchRoads);
-
-                 if(index2 == -1){
-                     continue;
-                 }
-
-                 // 如果此时还是没有匹配到路径,那么判定找不到对应的路了
-                 index = index2;
-
-             }
-           */
 
             if(index == -1){
 
@@ -182,7 +165,6 @@ public class Main {
             }
 
 
-            System.out.println();
 
             Map<String, Object> resultMap = DealWithRoute.fixDataAction(list, road.getShape());
 
@@ -247,7 +229,11 @@ public class Main {
 
 
             //将此时的三急数据对应的路段发送到一个异步处理的程序中，这边只是做一个发送的作用,发送到一个异步的队列中
-            cacheQueueHandle.appendToQueue(repairedList);
+            //cacheQueueHandle.appendToQueue(repairedList);
+
+
+            //用未修复的数据进行三急计算
+            cacheQueueHandle.appendToQueue(list);
 
 
         }
