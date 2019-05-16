@@ -1,6 +1,6 @@
 package com.muheda.AsynchronousTripCache;
 
-import clojure.lang.Obj;
+
 import com.muheda.dao.DrivingLabelDao;
 import com.muheda.domain.DriveData;
 import com.muheda.domain.LngAndLat;
