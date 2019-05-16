@@ -121,6 +121,50 @@ public class DbPoolConnection {
     }
 
 
+    /**
+     * @desc 查找出这个路所对应的路的id
+     * @param sql
+     * @return
+     */
+    public static  String  findRouteAdcode(String sql){
+
+
+        if (databasePool == null) {
+            databasePool = DbPoolConnection.getInstance();
+        }
+
+        DruidPooledConnection con = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+
+        String adcode = null;
+
+
+        try {
+            //获取数据库连接
+            con = databasePool.getConnection();
+            statement = con.prepareStatement(sql);
+            resultSet = statement.executeQuery(sql);
+
+
+            if(resultSet.next()){
+
+                adcode = resultSet.getString("adcode");
+            }
+
+            return  adcode;
+
+        } catch (SQLException ex) {
+            logger.error("sql语句执行出错");
+            ex.printStackTrace();
+        } finally {
+            closeConnection(con, statement);
+        }
+
+        return null;
+
+    }
+
 
 
     /**
