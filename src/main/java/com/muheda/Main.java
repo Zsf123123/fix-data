@@ -7,6 +7,7 @@ import com.muheda.dao.HbaseDao;
 import com.muheda.dataSourece.DataPreDealWith;
 import com.muheda.domain.LngAndLat;
 import com.muheda.domain.Road;
+import com.muheda.domain.RoadInfo;
 import com.muheda.service.DealWithRoute;
 import com.muheda.utils.DateUtils;
 import com.muheda.utils.MapUtils;
@@ -43,34 +44,22 @@ public class Main {
         while (true){
 
             for (String deviceId : allDeviceId) {
-
                 //获取当前正在修复的时间，拼接成rowKey，进行数据的查询
-                String startRow = "gt" + "_" + deviceId + "_" + tempDay + "_";
-                String endRow   = "gt" + "_" + deviceId + "_" + tempDay + "_z";
+                String startRow = "gt" + "_" + deviceId + "_" + tempDay;
+                String endRow   = "gt" + "_" + deviceId + "_" + tempDay + "z";
 
                 List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromHbase(startRow, endRow);
 
-
-                startFixRoad(lngAndLats,deviceId);
-
-
+                if(  lngAndLats != null && lngAndLats.size() > 0){
+                    startFixRoad(lngAndLats,deviceId);
+                }
             }
-
 
             tempDay = DateUtils.getTheDayBeforeYesterday(tempDay);
 
         }
 
-
-
-
     }
-
-
-    //实时的数据数据修复的开发
-
-
-
 
     /**
      * @desc 之前的代码基本上不需要进行优化了
@@ -78,14 +67,13 @@ public class Main {
     public  static  void startFixRoad(List<LngAndLat> route, String deviceId) {
 
 
-
         //数据预处理阶段，获取数据源
-        List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromConfigureFile();
+//        List<LngAndLat> lngAndLats = DataPreDealWith.datareProcessingFromConfigureFile();
 
         /**
          * @desc 按照时间先将路按照时间进行分段处理。再按照路径的距离进行划分
          */
-        List<List<LngAndLat>> routeByroads = DealWithRoute.splitRoadByTime(lngAndLats);
+        List<List<LngAndLat>> routeByroads = DealWithRoute.splitRoadByTime(route);
 
 
         //在这些按照路段分割的行程之内。再次按照距离进行分割。以免出现一些关于设备出现的其他的问题。比如有的设备会经常发送一些经纬度为0的数据
@@ -115,28 +103,39 @@ public class Main {
 
             // 确定出该路段的一个区域
 
-            String routeAdcode = DealWithRoute.findRouteAdcode(min.get(0), min.get(1));
-
+//            String routeAdcode = DealWithRoute.findRouteAdcode(min.get(0), min.get(1));
 
             try {
+
                 //拿到的匹配的路
-                matchRoads = DealWithRoute.findRoutesByMinRectangle(min.get(0), min.get(1),routeAdcode);
+                matchRoads = DealWithRoute.findRoutesByMinRectangle(min.get(0), min.get(1));
 
             } catch (SQLException e) {
                 logger.error("查询匹配路段异常");
                 e.printStackTrace();
             }
 
-
             int index = DealWithRoute.averageDistanceTop2(list, matchRoads);
 
+            // 如果匹配不上路网中的路段则直接使用未经修复的路段
             if(index == -1){
 
+                Map<RoadInfo, List<LngAndLat>> map = new HashMap<>();
+                RoadInfo roadInfo = new RoadInfo();
+                roadInfo.setMatch(false);
+                roadInfo.setAdcode(null);
+                map.put(roadInfo,list);
+                
+                cacheQueueHandle.appendToQueue(map);
+                
                 continue;
             }
 
 
             Road road = matchRoads.get(index);
+
+            //该路段所对应的实际路段的地区编号
+            String adcode = road.getAdcode();
 
 
             LinkedList<LngAndLat> roadList = new LinkedList<>();
@@ -165,18 +164,13 @@ public class Main {
             }
 
 
+            System.out.println();
 
             Map<String, Object> resultMap = DealWithRoute.fixDataAction(list, road.getShape());
 
             List<LngAndLat> repairedList = (List<LngAndLat>) resultMap.get("repairedList");
 
             List<Integer> mappingIndex = (List<Integer>) resultMap.get("mappingIndex");
-
-
-            for (Integer integer : mappingIndex) {
-
-                System.out.println(integer);
-            }
 
 
             //找出行程的起始的点对应的路网的路网的点的index和终点上的index,从而切出来映射的整个路段
@@ -215,25 +209,22 @@ public class Main {
             }
 
 
-
             //将原始数据, 修复之后的数据，映射的路网的数据都给存储到表中
-            HbaseDao.saveDeviceRoute( deviceId,list, repairedList, mappingRoad, road.getId());
+            HbaseDao.saveDeviceRoute(deviceId,list, repairedList, mappingRoad, road.getId());
 
+            
+            if(repairedList != null){
 
+                Map<RoadInfo, List<LngAndLat>> map = new HashMap<>();
+                RoadInfo roadInfo = new RoadInfo();
+                roadInfo.setAdcode(adcode);
+                roadInfo.setMatch(true);
 
-            /**
-             * 并且将原始数据的时间添加到路网数据的点上
-             * 进行计算的时候是将原始数据和路网数据交织在一起相互进行补充进行修复的
-             * 因为行程数据本身由于时间间隔过长等的原因，会造成如何拿这些数据计算可能会造成后面的计算的不准确。故将2者的点进行交互交织
-             */
+                map.put(roadInfo,repairedList);
 
+                cacheQueueHandle.appendToQueue(map);
+            }
 
-            //将此时的三急数据对应的路段发送到一个异步处理的程序中，这边只是做一个发送的作用,发送到一个异步的队列中
-            //cacheQueueHandle.appendToQueue(repairedList);
-
-
-            //用未修复的数据进行三急计算
-            cacheQueueHandle.appendToQueue(list);
 
 
         }
@@ -241,9 +232,6 @@ public class Main {
     }
 
 
-    /**
-     * @desc 将原始数据和路网映射数据进行结合
-     */
 
 
 }

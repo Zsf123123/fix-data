@@ -1,9 +1,12 @@
 package com.muheda.AsynchronousTripCache;
 
 import com.muheda.domain.LngAndLat;
+import com.muheda.domain.RoadInfo;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -12,25 +15,25 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class CacheQueueHandle {
 
 
-    private static ConcurrentLinkedQueue<List<LngAndLat>> queue = new ConcurrentLinkedQueue();
+    private static ConcurrentLinkedQueue<Map<RoadInfo,List<LngAndLat>>> queue = new ConcurrentLinkedQueue();
 
 
-    public ConcurrentLinkedQueue<List<LngAndLat>> getQueue() {
+    public ConcurrentLinkedQueue<Map<RoadInfo,List<LngAndLat>>>getQueue() {
         return queue;
     }
 
     /**
-     * @param list 传过来的已经修复好的行程
+     * @param map 已经修复好的行程或者是不能够被修复的路径
      * @return 返回是否追加成功
      * @desc 将传来的行程追加到队列的末尾
      */
-    public Boolean appendToQueue(List<LngAndLat> list) {
+    public Boolean appendToQueue(Map<RoadInfo,List<LngAndLat>> map) {
 
-        if (list.size() == 0) {
+        if (map.size() == 0) {
             return false;
         }
 
-        return queue.add(list);
+        return queue.add(map);
     }
 
 
@@ -38,9 +41,9 @@ public class CacheQueueHandle {
      * @desc 消费行程的缓存队列，并将消费之后的行程在原来的缓存队列中删除
      * @return
      */
-    public List<List<LngAndLat>> consumeTrip(){
+    public List<Map<RoadInfo,List<LngAndLat>>> consumeTrip(){
 
-        List<List<LngAndLat>> resultList = new LinkedList<>();
+        List<Map<RoadInfo,List<LngAndLat>>> resultList = new LinkedList<>();
 
         int size = queue.size();
 

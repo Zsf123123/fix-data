@@ -4,6 +4,7 @@ package com.muheda.AsynchronousTripCache;
 import com.muheda.dao.DrivingLabelDao;
 import com.muheda.domain.DriveData;
 import com.muheda.domain.LngAndLat;
+import com.muheda.domain.RoadInfo;
 import com.muheda.service.DealWithRoute;
 import com.muheda.service.SafetyDrivingCheck;
 import com.muheda.utils.DateUtils;
@@ -53,19 +54,30 @@ public class ConsumeCacheGenerateRouteLabel {
     public   void consumeCacheTrip(){
 
 
-        List<List<LngAndLat>> lists = cacheQueueHandle.consumeTrip();
+        List<Map<RoadInfo, List<LngAndLat>>> maps = cacheQueueHandle.consumeTrip();
 
-        if(null == lists){
-
+        if(null == maps){
             return;
         }
 
         //消费传过来的行程的时候,查看2个行程之间的时间是不是一个连续的过程,我们需要缓存上一个行程的数据
+        
+        for (Map<RoadInfo,List<LngAndLat>> map : maps) {
+
+            List<LngAndLat> thisRoute = null;
 
 
-        for (List<LngAndLat>  thisRoute : lists) {
+            for (Map.Entry<RoadInfo,List<LngAndLat>> entry : map.entrySet()) {
+
+                RoadInfo key = entry.getKey();
+                thisRoute = entry.getValue();
+
+
+            }
 
             LngAndLat thisPoint = thisRoute.get(0);
+
+            String deviceId = thisPoint.getDeviceId();
 
             if(thisPoint == null){
                 continue;
@@ -76,14 +88,12 @@ public class ConsumeCacheGenerateRouteLabel {
             if(lastRoute == null){
 
                 //在此处对行程进行非空判断
-
                 Map<String, Object>  thisRouteMap = splitRouteToArray(thisRoute);
 
                 //只算急加速，急减速
-                DriveData urgentSpeed = new SafetyDrivingCheck().getSpeedCheck( (List<Double>) thisRouteMap.get("lon"),  (List<Double>) thisRouteMap.get("lat"), (List<Date>) thisRouteMap.get("time"));
+                DriveData urgentSpeed = SafetyDrivingCheck.getSpeedCheck(deviceId ,(List<Double>) thisRouteMap.get("lon"),  (List<Double>) thisRouteMap.get("lat"), (List<Date>) thisRouteMap.get("time"));
 
                 //todo:将计算的急加速，急减速存储起来
-
                 if(urgentSpeed != null){
 
                     DrivingLabelDao.saveRouteUrgentSpeedLabel("deviceId", urgentSpeed);
@@ -96,13 +106,7 @@ public class ConsumeCacheGenerateRouteLabel {
 
             }
 
-
-
-
-            String  thisDeviceId = thisPoint.getDeviceId();
             Date  thisDate = thisPoint.getDate();
-
-            SafetyDrivingCheck safetyDrivingCheck = new SafetyDrivingCheck();
 
             List<Double> lon  = null;
             List<Double> lat  = null;
@@ -115,7 +119,7 @@ public class ConsumeCacheGenerateRouteLabel {
 
             // 如果此时的上一段行程不为空，但是上一段行程与现在的行程不是属于同一个设备,或者此时的这段行程与上一段的时间差过大。 则也是进行单独的计算
             if(lastRoute != null
-                    &&  lastRouteDeviceId.equals(thisDeviceId) || DateUtils.getDiffDate(thisDate, lastRouteTime, 12) < 10){
+                    &&  lastRouteDeviceId.equals(deviceId) || DateUtils.getDiffDate(thisDate, lastRouteTime, 12) < 10){
 
 
                 Map<String, Object> thisRouteMap = splitRouteToArray(thisRoute);
@@ -126,22 +130,22 @@ public class ConsumeCacheGenerateRouteLabel {
 
 
                 //急加速,急减速
-                urgentSpeed = safetyDrivingCheck.getSpeedCheck(lon, lat, time);
+                urgentSpeed = SafetyDrivingCheck.getSpeedCheck(deviceId,lon, lat, time);
 
 
 
                 //急转弯，在计算急转弯的时候，需要将上次行程的结束点插入现有的行程之中
-                urgentSharpTurn = safetyDrivingCheck.getSharpTurnCheck( lastRouteLastPoint,lon, lat, time);
+                urgentSharpTurn = SafetyDrivingCheck.getSharpTurnCheck( deviceId,lastRouteLastPoint,lon, lat, time);
 
                 if(urgentSpeed != null){
 
-                    DrivingLabelDao.saveRouteUrgentSpeedLabel("deviceId", urgentSpeed);
+                    DrivingLabelDao.saveRouteUrgentSpeedLabel(deviceId, urgentSpeed);
                 }
 
                 if(urgentSharpTurn != null){
 
                     //将标签数据存储到hbase中
-                    DrivingLabelDao.saveRouteUrgentSharpTurn("deviceId", urgentSharpTurn);
+                    DrivingLabelDao.saveRouteUrgentSharpTurn(deviceId, urgentSharpTurn);
                 }
 
 
@@ -153,7 +157,7 @@ public class ConsumeCacheGenerateRouteLabel {
 
                 System.out.println("正在计算急加速和急减速");
                 //急加速,急减速
-                urgentSpeed = safetyDrivingCheck.getSpeedCheck(lon, lat, time);
+                urgentSpeed = SafetyDrivingCheck.getSpeedCheck(deviceId,lon, lat, time);
 
                 //将此行程更新为上次
                 updateCurrentRoute(thisRouteMap,thisRoute);
@@ -164,7 +168,16 @@ public class ConsumeCacheGenerateRouteLabel {
 
         }
 
-
+        
+        //此时已经拿到急加速，急转弯的标签。在这时我们需要开始关联出相关数据
+        
+        
+        
+        
+        
+        
+        
+        
 
     }
 

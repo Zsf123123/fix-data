@@ -73,7 +73,9 @@ public class SafetyDrivingCheck {
      * @param time 对应的时间，单位为：秒， 传过来的时间精确到秒 元素可以为0，当为0时，表示当前打点时间忽略、缺失或异常，程序处理时将自动跳过
      * @return
      */
-    public DriveData getSpeedCheck(List<Double> lon, List<Double> lat, List<Date> time){
+    public static DriveData getSpeedCheck(String deviceId,List<Double> lon, List<Double> lat, List<Date> time){
+
+
 
 
         if(!checkData(lon, lat, time)){
@@ -113,7 +115,7 @@ public class SafetyDrivingCheck {
                 if(v > 0){
                     //计算出加速度
                     a = (delte - v)/(delteTime);
-                    driveData.addData(a, time.get(i), new LngAndLat(lon.get(i),lat.get(i)));
+                    driveData.addData(a, time.get(i), new LngAndLat(deviceId,lon.get(i),lat.get(i)));
                 }
 
                 preTime = time.get(i);
@@ -195,7 +197,7 @@ public class SafetyDrivingCheck {
     // lon 对应的经度
     // lat 对应的维度
     // timre 对应的时间，单位为：秒，元素可以为0，当为0时，表示当前打点时间忽略、缺失或异常，程序处理时将自动跳过
-    public DriveData getSharpTurnCheck(LngAndLat lastRoutePoint, List<Double> lon, List<Double> lat, List<Date> time){
+    public static DriveData getSharpTurnCheck(String deviceId,LngAndLat lastRoutePoint, List<Double> lon, List<Double> lat, List<Date> time){
 
         lon.add(0,lastRoutePoint.getLng());
         lat.add(0,lastRoutePoint.getLat());
@@ -228,8 +230,7 @@ public class SafetyDrivingCheck {
 
                 delte = rad/(delteTime);
 
-
-                driveData.addData(delte, time.get(i), new LngAndLat(lon.get(i), lat.get(i)));
+                driveData.addData(delte, time.get(i), new LngAndLat(deviceId,lon.get(i), lat.get(i)));
 
                 preTime = time.get(i);
 
@@ -247,7 +248,7 @@ public class SafetyDrivingCheck {
         return driveData;
     }
 
-    private boolean checkData(List<Double> lon, List<Double> lat, List<Date> time){
+    private static boolean checkData(List<Double> lon, List<Double> lat, List<Date> time){
         if(lon == null || lat == null || time == null){
             return false;
         }
@@ -295,7 +296,7 @@ public class SafetyDrivingCheck {
 
 
 
-    private double distance(double lon1, double lat1, double lon2, double lat2){
+    private static double distance(double lon1, double lat1, double lon2, double lat2){
         double s = 0;
 
         s += (lon2 - lon1)*(lon2 - lon1);
@@ -305,7 +306,7 @@ public class SafetyDrivingCheck {
     }
 
 
-    private double rad(double lon1, double lat1, double lon2, double lat2){
+    private static double rad(double lon1, double lat1, double lon2, double lat2){
         double vecFZ = 0;
         double vecFM = 0;
 

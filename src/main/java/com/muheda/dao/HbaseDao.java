@@ -463,7 +463,7 @@ public class HbaseDao {
 
         ResultScanner rs = null;
         try {
-            rs = table.getScanner(scan);
+            rs = basicDataTable.getScanner(scan);
         } catch (IOException e) {
             logger.error("获取" + tableName + "数据失败 !!");
             e.printStackTrace();
@@ -501,7 +501,6 @@ public class HbaseDao {
 
 
     //存储设备的原始行程数据，修复之后的数据，映射到的路网的数据和映射所在路的id
-
     public static void saveDeviceRoute(String deviceId ,List<LngAndLat> orignRoute, List<LngAndLat> repairedRoute, List<LngAndLat> mappingRoute, String roadId){
 
         // 判断行程修复的表的状态

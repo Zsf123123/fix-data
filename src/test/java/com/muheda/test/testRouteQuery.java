@@ -2,6 +2,7 @@ package com.muheda.test;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.muheda.dao.HbaseDao;
 import com.muheda.domain.LngAndLat;
 import com.muheda.service.DealWithRoute;
 import com.muheda.utils.HttpRequest;
@@ -132,6 +133,23 @@ public class testRouteQuery {
     }
 
 
+    @Test
+    public void testDeviceId(){
+
+        List<String> allDeviceId = HbaseDao.getAllDeviceId("device_register_info", "getuyunjing", "deviceId", "gt");
+
+
+        for (int i = 0; i < allDeviceId.size();  i++) {
+
+            if("459432812639467".equals(allDeviceId.get(i))){
+
+                System.out.println(i);
+            }
+        }
+
+
+
+    }
 
 
 

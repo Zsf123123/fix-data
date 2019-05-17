@@ -33,6 +33,12 @@ public class LngAndLat implements Serializable , Cloneable {
     }
 
 
+    public LngAndLat(String deviceId ,Double lng, Double lat) {
+        this.deviceId = deviceId;
+        this.lng = lng;
+        this.lat = lat;
+    }
+
     public LngAndLat(Double lng, Double lat, Date date) {
         this.lng = lng;
         this.lat = lat;

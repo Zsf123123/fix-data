@@ -3,10 +3,7 @@ package com.muheda.dataSourece;
 
 import com.muheda.dao.HbaseDao;
 import com.muheda.domain.LngAndLat;
-import com.muheda.utils.MapUtils;
-import com.muheda.utils.ReadProperty;
-import com.muheda.utils.TestReadLine;
-import com.muheda.utils.TimeUtils;
+import com.muheda.utils.*;
 import kafka.security.auth.Read;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -86,9 +83,23 @@ public class DataPreDealWith {
 
                 if(null != col && col.equals("imei")){
 
+                   String deviceId = new String(CellUtil.cloneValue(cell));
+
+                   if(deviceId != null){
+                       lngAndLat.setDeviceId(deviceId);
+                   }
+
                 }
 
-                lngAndLat.setDeviceId("00001");
+                if(null !=col  && col.equals("time")){
+
+                    String date = new String(CellUtil.cloneValue(cell));
+
+                    if(!StringUtil.isEmpty(date)){
+                        lngAndLat.setDate(DateUtils.parseDate(date,DateUtils.DATETIME_FORMAT));
+                    }
+                }
+
 
             }
 
